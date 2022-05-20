@@ -22,14 +22,14 @@ type Encoder struct {
 //
 // The encoder writes a correct Boost binary header at the beginning of
 // the archive.
-func NewEncoder(w io.Writer) *Encoder {
-	ww := NewWBuffer(w)
+func NewEncoder(w io.Writer, h Header) *Encoder {
+	ww := NewWBuffer(w, h)
 	return &Encoder{w: ww}
 }
 
 func (enc *Encoder) writeHeader() {
 	if enc.Header == zeroHdr {
-		enc.Header = bserHdr
+		enc.Header = Bser64Hdr
 	}
 
 	enc.w.WriteString(magicHeader)

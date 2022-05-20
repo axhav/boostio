@@ -18,6 +18,7 @@ type RBuffer struct {
 	buf []byte
 
 	types registry
+	hdr   Header
 }
 
 // NewRBuffer returns a new read-only buffer that reads from r.
@@ -26,33 +27,36 @@ func NewRBuffer(r io.Reader) *RBuffer {
 		r:     r,
 		buf:   make([]byte, 8),
 		types: newRegistry(),
+		hdr:   Bser64Hdr,
 	}
 }
 
 func (r *RBuffer) Err() error { return r.err }
 
-func (r *RBuffer) ReadHeader() Header {
-	var hdr Header
+func (r *RBuffer) ReadHeader() {
 	if r.r == nil {
 		r.err = ErrNotBoost
-		return hdr
+		return
 	}
 
 	if r.err != nil {
-		return hdr
+		return
 	}
 
 	v := r.ReadString()
 	if v != magicHeader {
 		r.err = ErrNotBoost
-		return hdr
+		return
 	}
 
-	hdr.UnmarshalBoost(r)
+	r.hdr.UnmarshalBoost(r)
 	if r.err != nil {
 		r.err = ErrInvalidHeader
 	}
-	return hdr
+}
+
+func (r *RBuffer) GetHeader() Header {
+	return r.hdr
 }
 
 func (r *RBuffer) ReadTypeDescr(typ reflect.Type) TypeDescr {

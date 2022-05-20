@@ -5,25 +5,26 @@
 package binser
 
 import (
-	"encoding/binary"
 	"io"
 	"math"
 	"reflect"
 )
 
 type WBuffer struct {
-	w   io.Writer
-	err error
-	buf []byte
+	w      io.Writer
+	err    error
+	buf    []byte
+	header Header
 
 	types registry
 }
 
-func NewWBuffer(w io.Writer) *WBuffer {
+func NewWBuffer(w io.Writer, h Header) *WBuffer {
 	return &WBuffer{
-		w:     w,
-		buf:   make([]byte, 8),
-		types: newRegistry(),
+		w:      w,
+		buf:    make([]byte, 8),
+		types:  newRegistry(),
+		header: h,
 	}
 }
 
@@ -91,7 +92,7 @@ func (w *WBuffer) WriteU16(v uint16) error {
 		return w.err
 	}
 	const n = 2
-	binary.LittleEndian.PutUint16(w.buf[:n], v)
+	w.header.Endian.PutUint16(w.buf[:n], v)
 	w.write(n)
 	return w.err
 }
@@ -101,7 +102,7 @@ func (w *WBuffer) WriteU32(v uint32) error {
 		return w.err
 	}
 	const n = 4
-	binary.LittleEndian.PutUint32(w.buf[:n], v)
+	w.header.Endian.PutUint32(w.buf[:n], v)
 	w.write(n)
 	return w.err
 }
@@ -111,7 +112,7 @@ func (w *WBuffer) WriteU64(v uint64) error {
 		return w.err
 	}
 	const n = 8
-	binary.LittleEndian.PutUint64(w.buf[:n], v)
+	w.header.Endian.PutUint64(w.buf[:n], v)
 	w.write(n)
 	return w.err
 }
@@ -130,7 +131,7 @@ func (w *WBuffer) WriteI16(v int16) error {
 		return w.err
 	}
 	const n = 2
-	binary.LittleEndian.PutUint16(w.buf[:n], uint16(v))
+	w.header.Endian.PutUint16(w.buf[:n], uint16(v))
 	w.write(n)
 	return w.err
 }
@@ -140,7 +141,7 @@ func (w *WBuffer) WriteI32(v int32) error {
 		return w.err
 	}
 	const n = 4
-	binary.LittleEndian.PutUint32(w.buf[:n], uint32(v))
+	w.header.Endian.PutUint32(w.buf[:n], uint32(v))
 	w.write(n)
 	return w.err
 }
@@ -150,7 +151,7 @@ func (w *WBuffer) WriteI64(v int64) error {
 		return w.err
 	}
 	const n = 8
-	binary.LittleEndian.PutUint64(w.buf[:n], uint64(v))
+	w.header.Endian.PutUint64(w.buf[:n], uint64(v))
 	w.write(n)
 	return w.err
 }
@@ -160,7 +161,7 @@ func (w *WBuffer) WriteF32(v float32) error {
 		return w.err
 	}
 	const n = 4
-	binary.LittleEndian.PutUint32(w.buf[:n], math.Float32bits(v))
+	w.header.Endian.PutUint32(w.buf[:n], math.Float32bits(v))
 	w.write(n)
 	return w.err
 }
@@ -170,7 +171,7 @@ func (w *WBuffer) WriteF64(v float64) error {
 		return w.err
 	}
 	const n = 8
-	binary.LittleEndian.PutUint64(w.buf[:n], math.Float64bits(v))
+	w.header.Endian.PutUint64(w.buf[:n], math.Float64bits(v))
 	w.write(n)
 	return w.err
 }
@@ -180,8 +181,8 @@ func (w *WBuffer) WriteC64(v complex64) error {
 		return w.err
 	}
 	const n = 8
-	binary.LittleEndian.PutUint32(w.buf[:4], math.Float32bits(real(v)))
-	binary.LittleEndian.PutUint32(w.buf[4:], math.Float32bits(imag(v)))
+	w.header.Endian.PutUint32(w.buf[:4], math.Float32bits(real(v)))
+	w.header.Endian.PutUint32(w.buf[4:], math.Float32bits(imag(v)))
 	w.write(n)
 	return w.err
 }
@@ -191,9 +192,9 @@ func (w *WBuffer) WriteC128(v complex128) error {
 		return w.err
 	}
 	const n = 8
-	binary.LittleEndian.PutUint64(w.buf[:n], math.Float64bits(real(v)))
+	w.header.Endian.PutUint64(w.buf[:n], math.Float64bits(real(v)))
 	w.write(n)
-	binary.LittleEndian.PutUint64(w.buf[:n], math.Float64bits(imag(v)))
+	w.header.Endian.PutUint64(w.buf[:n], math.Float64bits(imag(v)))
 	w.write(n)
 	return w.err
 }

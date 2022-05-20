@@ -43,14 +43,22 @@ var (
 )
 
 var (
-	zeroHdr Header
-	bserHdr = Header{
-		Version: Version,
-		Flags: binary.LittleEndian.Uint64([]byte{
-			0x4, 0x8, // size of int, long
-			0x4, 0x8, // size of float, double
-			0x1, 0x0, 0x0, 0x0, // little-endian
-		}),
+	zeroHdr   Header
+	Bser64Hdr = Header{
+		Version:      Version,
+		SizeOfInt:    4,
+		SizeOfLong:   8,
+		SizeOfFloat:  4,
+		SizeOfDouble: 8,
+		Endian:       binary.LittleEndian,
+	}
+	Bser32Hdr = Header{
+		Version:      Version,
+		SizeOfInt:    4,
+		SizeOfLong:   4,
+		SizeOfFloat:  4,
+		SizeOfDouble: 8,
+		Endian:       binary.LittleEndian,
 	}
 )
 
@@ -68,8 +76,12 @@ type Marshaler interface {
 
 // Header describes a binary boost archive.
 type Header struct {
-	Version uint16
-	Flags   uint64
+	Version      uint16
+	SizeOfInt    uint8
+	SizeOfLong   uint8
+	SizeOfFloat  uint8
+	SizeOfDouble uint8
+	Endian       binary.ByteOrder
 }
 
 func (hdr Header) MarshalBoost(w *WBuffer) error {
@@ -77,7 +89,11 @@ func (hdr Header) MarshalBoost(w *WBuffer) error {
 		return w.err
 	}
 	w.WriteU16(hdr.Version)
-	w.WriteU64(hdr.Flags)
+	w.WriteU8(hdr.SizeOfInt)
+	w.WriteU8(hdr.SizeOfLong)
+	w.WriteU8(hdr.SizeOfFloat)
+	w.WriteU8(hdr.SizeOfDouble)
+	w.WriteU32(1)
 	return w.err
 }
 
@@ -86,7 +102,17 @@ func (hdr *Header) UnmarshalBoost(r *RBuffer) error {
 		return r.err
 	}
 	hdr.Version = r.ReadU16()
-	hdr.Flags = r.ReadU64()
+	hdr.SizeOfInt = r.ReadU8()
+	hdr.SizeOfLong = r.ReadU8()
+	hdr.SizeOfFloat = r.ReadU8()
+	hdr.SizeOfDouble = r.ReadU8()
+	endian := make([]byte, 4)
+	r.Read(endian)
+	if endian[0] == 1 {
+		hdr.Endian = binary.LittleEndian
+	} else {
+		hdr.Endian = binary.BigEndian
+	}
 	return r.err
 }
 

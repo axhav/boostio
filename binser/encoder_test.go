@@ -63,7 +63,7 @@ func TestEncoder(t *testing.T) {
 				got = reflect.New(reflect.TypeOf(tc.want)).Elem()
 			)
 
-			enc := binser.NewEncoder(buf)
+			enc := binser.NewEncoder(buf, binser.Bser64Hdr)
 			err = enc.Encode(tc.want)
 			if err != nil {
 				t.Fatal(err)
@@ -93,7 +93,7 @@ func (errWriter) Write(p []byte) (int, error) { return 0, io.ErrUnexpectedEOF }
 func TestEncoderError(t *testing.T) {
 	for _, tc := range typeTestCases {
 		t.Run(tc.name, func(t *testing.T) {
-			enc := binser.NewEncoder(errWriter{})
+			enc := binser.NewEncoder(errWriter{}, binser.Bser64Hdr)
 			err := enc.Encode(tc.want)
 			if err == nil {
 				t.Fatalf("expected an error")
@@ -105,7 +105,7 @@ func TestEncoderError(t *testing.T) {
 func TestWBufferWriter(t *testing.T) {
 	want := []byte("hello")
 	buf := new(bytes.Buffer)
-	w := binser.NewWBuffer(buf)
+	w := binser.NewWBuffer(buf, binser.Bser64Hdr)
 	_, err := w.Write(want)
 	if err != nil {
 		t.Fatal(err)
@@ -119,7 +119,7 @@ func TestWBufferWriter(t *testing.T) {
 func TestEncoderInvalidType(t *testing.T) {
 	var iface interface{} = 42
 
-	enc := binser.NewEncoder(new(bytes.Buffer))
+	enc := binser.NewEncoder(new(bytes.Buffer), binser.Bser64Hdr)
 	err := enc.Encode(iface)
 	if err == nil {
 		t.Fatalf("expected an error")
@@ -137,7 +137,7 @@ func TestEncoderCompatWithBoost(t *testing.T) {
 	}
 	defer f.Close()
 
-	enc := binser.NewEncoder(f)
+	enc := binser.NewEncoder(f, binser.Bser64Hdr)
 	for _, tc := range typeTestCases {
 		err := enc.Encode(tc.want)
 		if err != nil {

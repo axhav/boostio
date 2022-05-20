@@ -173,7 +173,7 @@ func TestRBufferReader(t *testing.T) {
 
 func TestInvalidArray(t *testing.T) {
 	buf := new(bytes.Buffer)
-	enc := binser.NewEncoder(buf)
+	enc := binser.NewEncoder(buf, binser.Bser64Hdr)
 	err := enc.Encode([3]int32{1, 2, 3})
 	if err != nil {
 		t.Fatal(err)

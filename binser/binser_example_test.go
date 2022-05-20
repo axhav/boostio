@@ -57,8 +57,8 @@ func ExampleRBuffer() {
 	defer f.Close()
 
 	r := binser.NewRBuffer(f)
-
-	fmt.Printf("header: %#v\n", r.ReadHeader())
+	r.ReadHeader()
+	fmt.Printf("header: %#v\n", r.GetHeader())
 
 	fmt.Printf("bool: %v\n", r.ReadBool())
 	fmt.Printf("bool: %v\n", r.ReadBool())
@@ -74,7 +74,7 @@ func ExampleRBuffer() {
 	fmt.Printf("float64: %v\n", r.ReadF64())
 
 	// Output:
-	// header: binser.Header{Version:0x11, Flags:0x108040804}
+	// header: binser.Header{Version:0x11, SizeOfInt:0x4, SizeOfLong:0x8, SizeOfFloat:0x4, SizeOfDouble:0x8, Endian:binary.LittleEndian}
 	// bool: false
 	// bool: true
 	// int8: 0x11
@@ -91,7 +91,7 @@ func ExampleRBuffer() {
 
 func ExampleEncoder() {
 	buf := new(bytes.Buffer)
-	enc := binser.NewEncoder(buf)
+	enc := binser.NewEncoder(buf, binser.Bser64Hdr)
 
 	for _, v := range []interface{}{"hello", int32(0x44444444)} {
 		err := enc.Encode(v)
